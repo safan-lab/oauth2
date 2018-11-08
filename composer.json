@@ -1,0 +1,25 @@
+{
+    "name": "safan-lab/oauth2",
+    "type": "library",
+    "description": "The Oauth2 Library for Safan framework",
+    "keywords": ["framework"],
+    "homepage": "http://www.safanlab.com",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Harut Grigoryan",
+            "email": "support@safanlab.com"
+        },
+        {
+            "name": "Safan Lab",
+            "homepage": "http://www.safanlab.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "safan-lab/safan": "1.*",
+        "gap-db/orm": "1.*",
+        "gap-db/orm-cache": "1.*",
+        "symfony/http-foundation": "4.*"
+    }
+}
