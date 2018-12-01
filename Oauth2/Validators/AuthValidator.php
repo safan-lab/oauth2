@@ -2,6 +2,7 @@
 namespace Oauth2\Validators;
 
 use Oauth2\GrantTypes\BaseGrantType;
+use Oauth2\Validators\Exceptions\CorsException;
 use Oauth2\Validators\Exceptions\GrantTypeMissingConfigurationException;
 use Oauth2\Validators\Exceptions\InvalidContentTypeException;
 use Oauth2\Validators\Exceptions\InvalidGrantTypeException;
@@ -56,6 +57,7 @@ class AuthValidator
 
     /**
      * @return bool
+     * @throws CorsException
      * @throws InvalidRequestMethodException
      */
     private function checkMethod()
@@ -63,10 +65,15 @@ class AuthValidator
         $method = $this->config['method'] ?? false;
 
         if ($method) {
-            if (is_array($method) && !in_array($this->request->getRealMethod(), $method)) {
-                throw new InvalidRequestMethodException();
-            } elseif (!is_array($method) && strtoupper($this->request->getRealMethod()) != strtoupper($method)) {
-                throw new InvalidRequestMethodException();
+            if (
+                (is_array($method) && !in_array($this->request->getRealMethod(), $method)) ||
+                (!is_array($method) && strtoupper($this->request->getRealMethod()) != strtoupper($method))
+            ) {
+                if ($this->request->getRealMethod() == 'OPTIONS') {
+                    throw new CorsException();
+                } else {
+                    throw new InvalidRequestMethodException();
+                }
             }
         }
 
@@ -103,11 +110,16 @@ class AuthValidator
     {
         if ($this->request->getRealMethod() == 'GET') {
             $queryString = $this->request->getQueryString();
+            parse_str($queryString, $params);
+        } elseif (
+            ($this->request->getContentType() === 'application/json' || $this->request->getContentType() === 'json') &&
+            !empty($this->request->getContent())
+        ) {
+            $params = json_decode($this->request->getContent(), true);
         } else {
             $queryString = $this->request->getContent();
+            parse_str($queryString, $params);
         }
-
-        parse_str($queryString, $params);
 
         if (!isset($params['grant_type']) && !isset($params['token'])) {
             throw new InvalidGrantTypeException();

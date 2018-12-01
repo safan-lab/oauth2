@@ -3,6 +3,7 @@ namespace Oauth2\Controllers;
 
 use Oauth2\GrantTypes\BaseGrantType;
 use Oauth2\Validators\AuthValidator;
+use Oauth2\Validators\Exceptions\CorsException;
 use Safan\GlobalExceptions\ParamsNotFoundException;
 use Safan\Mvc\Controller;
 use Safan\Safan;
@@ -25,12 +26,13 @@ class OauthController extends Controller
             $request = Request::createFromGlobals();
             $config  = $this->getConfig('auth');
 
-            $this->normalizeJson($request);
-
             $validator = new AuthValidator($request, $config);
             $service   = $validator->getGrantType();
             $data      = $service->authorize();
             $status    = Response::HTTP_CREATED;
+        } catch (CorsException $e) {
+            $status = Response::HTTP_OK;
+            $data   = [];
         } catch (\Throwable $e) {
             $status = $e->getCode() ?: Response::HTTP_UNAUTHORIZED;
             $data   = [
@@ -54,12 +56,13 @@ class OauthController extends Controller
             $request = Request::createFromGlobals();
             $config  = $this->getConfig('auth');
 
-            $this->normalizeJson($request);
-
             $validator = new AuthValidator($request, $config);
             $service   = $validator->getGrantType();
             $data      = $service->authorize();
             $status    = Response::HTTP_OK;
+        } catch (CorsException $e) {
+            $status = Response::HTTP_OK;
+            $data   = [];
         } catch (\Throwable $e) {
             $status = $e->getCode() ?: Response::HTTP_UNAUTHORIZED;
             $data   = [
@@ -95,19 +98,6 @@ class OauthController extends Controller
     }
 
     /**
-     * @param Request $request
-     */
-    private function normalizeJson(Request &$request)
-    {
-        if (($request->getContentType() === 'application/json' || $request->getContentType() === 'json') &&
-            !empty($request->getContent())
-        ) {
-            $content = $request->getContent();
-            $request->request->add(json_decode($content, true));
-        }
-    }
-
-    /**
      * @param array $data
      * @param int $httpStatus
      * @param array $headers
@@ -115,7 +105,7 @@ class OauthController extends Controller
      */
     protected function respond($data = [], $httpStatus = Response::HTTP_OK, $headers = [])
     {
-        $response = new JsonResponse(json_encode($data, true), $httpStatus, $headers, true);
+        $response = new JsonResponse(json_encode($data, true), $httpStatus, $this->getHeaders($headers), true);
 
         return $response->send();
     }
@@ -144,7 +134,7 @@ class OauthController extends Controller
 
         $responseData = json_encode($responseData, true);
 
-        return new JsonResponse($responseData, $httpStatus, $headers, false);
+        return new JsonResponse($responseData, $httpStatus, $this->getHeaders($headers), false);
     }
 
     /**
@@ -164,6 +154,19 @@ class OauthController extends Controller
             $responseData['details'] = $data;
         }
 
-        return new JsonResponse($responseData, $httpStatus ?: Response::HTTP_UNAUTHORIZED, $headers, false);
+        return new JsonResponse($responseData, $httpStatus ?: Response::HTTP_UNAUTHORIZED, $this->getHeaders($headers), false);
+    }
+
+    /**
+     * @param array $headers
+     * @return array
+     */
+    private function getHeaders($headers = [])
+    {
+        return array_merge($headers, [
+            "Access-Control-Allow-Origin" => "*",
+            "Access-Control-Allow-Methods" => "POST, GET, DELETE, PUT, PATCH, OPTIONS",
+            "Access-Control-Allow-Headers" => "Authorization, Origin, X-Requested-With, Content-Type, Accept"
+        ]);
     }
 }
