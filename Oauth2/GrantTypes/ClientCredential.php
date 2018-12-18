@@ -31,8 +31,7 @@ class ClientCredential extends BaseGrantType
         try {
             $this->getAuthClientRepository()->getModel()->beginTransaction();
 
-            $this->cleanAccessToken($client->clientID);
-            $accessToken  = $this->createAccessToken($client);
+            $accessToken = $this->createAccessToken($client);
 
             Safan::handler()->getObjectManager()->get('eventListener')->runEvent('successAccessTokenRequest');
 
