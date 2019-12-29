@@ -29,6 +29,8 @@ class Password extends BaseGrantType
             throw new InvalidCredentialsException();
         }
 
+        $client->userID = Safan::handler()->getObjectManager()->get('authentication')->getUserID();
+
         try {
             $this->getAuthClientRepository()->getModel()->beginTransaction();
 

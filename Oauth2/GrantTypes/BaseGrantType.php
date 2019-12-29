@@ -74,14 +74,16 @@ abstract class BaseGrantType
 
     /**
      * @param $client
-     * @return mixed
+     * @return \stdClass
+     * @throws \Exception
      */
     protected function createAccessToken($client): \stdClass
     {
         $accessTokenExpired = new \DateTime();
         $accessTokenExpired->modify('+2 days');
 
-        $accessToken = $this->getAccessTokenRepository()->getModel()->getEmptyObject();
+        $accessToken           = $this->getAccessTokenRepository()->getModel()->getEmptyObject();
+        $accessToken->userID   = $client->userID ?? 0;
         $accessToken->clientID = $this->params['client_id'];
         $accessToken->token    = $this->createRandomToken();
         $accessToken->expired  = $accessTokenExpired;
@@ -93,7 +95,8 @@ abstract class BaseGrantType
 
     /**
      * @param $client
-     * @return mixed
+     * @return \stdClass
+     * @throws \Exception
      */
     protected function createRefreshToken($client): \stdClass
     {
