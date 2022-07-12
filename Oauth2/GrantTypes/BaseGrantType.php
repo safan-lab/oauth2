@@ -80,7 +80,7 @@ abstract class BaseGrantType
     protected function createAccessToken($client): \stdClass
     {
         $accessTokenExpired = new \DateTime();
-        $accessTokenExpired->modify('+2 days');
+        $accessTokenExpired->modify('+1 days');
 
         $accessToken           = $this->getAccessTokenRepository()->getModel()->getEmptyObject();
         $accessToken->userID   = $client->userID ?? 0;
